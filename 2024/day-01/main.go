@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func solve1(lines []string) (string, error) {
+func parseLists(lines []string) ([]int, []int, error) {
 	var list_one []int
 	var list_two []int
 
@@ -17,21 +17,29 @@ func solve1(lines []string) (string, error) {
 		words := strings.Fields(line)
 
 		if len(words) != 2 {
-			return "", fmt.Errorf("invalid line format: '%s'", line)
+			return nil, nil, fmt.Errorf("invalid line format: '%s'", line)
 		}
 
 		int1, err := strconv.Atoi(words[0])
 		if err != nil {
-			return "", fmt.Errorf("error converting '%s' to int: '%v'", words[0], err)
+			return nil, nil, fmt.Errorf("error converting '%s' to int: '%v'", words[0], err)
 		}
 
 		int2, err := strconv.Atoi(words[1])
 		if err != nil {
-			return "", fmt.Errorf("error converting '%s' to int: '%v'", words[1], err)
+			return nil, nil, fmt.Errorf("error converting '%s' to int: '%v'", words[1], err)
 		}
 
 		list_one = append(list_one, int1)
 		list_two = append(list_two, int2)
+	}
+	return list_one, list_two, nil
+}
+
+func solve1(lines []string) (string, error) {
+	list_one, list_two, err := parseLists(lines)
+	if err != nil {
+		return "", err
 	}
 
 	slices.Sort(list_one)
@@ -49,6 +57,26 @@ func solve1(lines []string) (string, error) {
 	}
 
 	return fmt.Sprintf("%d", total_distance), nil
+}
+
+func solve2(lines []string) (string, error) {
+	var answer int
+
+	list_one, list_two, err := parseLists(lines)
+	if err != nil {
+		return "", err
+	}
+
+	occurences := make(map[int]int)
+	for _, num := range list_two {
+		occurences[num] += 1
+	}
+
+	for _, num := range list_one {
+		answer += num * occurences[num]
+	}
+
+	return fmt.Sprintf("%d", answer), nil
 }
 
 func readFile(filePath string) ([]string, error) {
@@ -78,4 +106,7 @@ func main() {
 	}
 	answer, _ := solve1(lines)
 	fmt.Printf("Puzzle 1 Answer: %s\n", answer)
+
+	answer2, _ := solve2(lines)
+	fmt.Printf("Puzzle 2 Answer: %s\n", answer2)
 }
