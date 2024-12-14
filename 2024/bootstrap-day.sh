@@ -1,13 +1,18 @@
 #!/bin/bash
 
+YEAR=2024
 DAY=$(printf "%02d" $1)
 DAY_FOLDER="day-$DAY"
-MODULE_PATH="github.com/bikefrivolously/advent-of-code/2024/$DAY_FOLDER"
+MODULE_PATH="github.com/bikefrivolously/advent-of-code/$YEAR/$DAY_FOLDER"
 
 if [ -d "$DAY_FOLDER" ]; then
     echo "Folder $DAY_FOLDER already exists."
     exit 1
 fi
+
+# create a new branch for the day's puzzles
+git fetch
+git switch -c $YEAR-$DAY_FOLDER origin/main
 
 mkdir -p $DAY_FOLDER
 
