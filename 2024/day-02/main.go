@@ -25,6 +25,32 @@ func parseReadings(lines []string) ([][]int, error) {
 	return readings, nil
 }
 
+func readingIsSafe(reading []int) bool {
+	if len(reading) < 2 {
+		return true
+	}
+
+	prevDiff := 0
+	for i := 1; i < len(reading); i++ {
+		diff := reading[i] - reading[i-1]
+		if diff == 0 || diff > 3 || diff < -3 {
+			return false
+		}
+		if prevDiff*diff < 0 { // changed direction
+			return false
+		}
+		prevDiff = diff
+	}
+	return true
+}
+
+func removeLevel(reading []int, index int) []int {
+	newSlice := make([]int, 0, len(reading)-1)
+	newSlice = append(newSlice, reading[:index]...)
+	newSlice = append(newSlice, reading[index+1:]...)
+	return newSlice
+}
+
 func solve1(lines []string) (string, error) {
 	var answer int
 	readings, err := parseReadings(lines)
@@ -35,27 +61,8 @@ func solve1(lines []string) (string, error) {
 	var numSafe int
 
 	for _, reading := range readings {
-		var safe bool = true
-		var prevDiff int = 0
-		for i := 0; i < len(reading)-1; i++ {
-			x := reading[i]
-			y := reading[i+1]
-
-			diff := y - x
-			// did it change gradually from the previous level
-			if diff == 0 || diff > 3 || diff < -3 {
-				safe = false
-				break
-			}
-			// did it change direction?
-			if prevDiff*diff < 0 {
-				safe = false
-				break
-			}
-			prevDiff = diff
-		}
-		if safe {
-			numSafe += 1
+		if readingIsSafe(reading) {
+			numSafe++
 		}
 	}
 	answer = numSafe
@@ -64,7 +71,36 @@ func solve1(lines []string) (string, error) {
 }
 
 func solve2(lines []string) (string, error) {
-	return "4", nil
+	var answer int
+	readings, err := parseReadings(lines)
+	if err != nil {
+		return "", err
+	}
+
+	var numSafe int
+
+	for _, reading := range readings {
+		if readingIsSafe(reading) {
+			numSafe++
+			continue
+		}
+
+		safeWithRemoval := false
+		for i := 0; i < len(reading); i++ {
+			modifiedReading := removeLevel(reading, i)
+			if readingIsSafe(modifiedReading) {
+				safeWithRemoval = true
+				break
+			}
+		}
+		if safeWithRemoval {
+			numSafe++
+		}
+	}
+
+	answer = numSafe
+
+	return fmt.Sprintf("%d", answer), nil
 }
 
 func readFile(filePath string) ([]string, error) {
