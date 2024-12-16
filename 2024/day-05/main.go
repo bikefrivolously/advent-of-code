@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -17,7 +18,8 @@ type ruleList []Rule
 
 // holds rules, and can be used to look up all rules involving a number
 type ruleBook struct {
-	rules map[string]ruleList
+	rules    map[string]ruleList
+	allRules ruleList
 }
 
 func newRuleBook() *ruleBook {
@@ -32,18 +34,16 @@ func (r *ruleBook) loadRules(rules []string) {
 		realRule := Rule{before: operands[0], after: operands[1]}
 		r.rules[operands[0]] = append(r.rules[operands[0]], realRule)
 		r.rules[operands[1]] = append(r.rules[operands[1]], realRule)
+		r.allRules = append(r.allRules, realRule)
 	}
 }
 
 func (r *ruleBook) IsOrderValid(before string, after string) bool {
 	for _, rule := range r.rules[before] {
-		fmt.Printf("Checking if %s belongs before %s. Rule: before=%s, after=%s\n", before, after, rule.before, rule.after)
 		if rule.before == before && rule.after == after {
-			fmt.Println("True")
 			return true
 		}
 		if rule.after == before && rule.before == after {
-			fmt.Println("False")
 			return false
 		}
 	}
@@ -83,6 +83,99 @@ func parseData(lines []string) ([]string, [][]string) {
 	return rules, updates
 }
 
+func createGraph(rules ruleList, updates [][]string) (map[string][]string, map[string]int) {
+	graph := make(map[string][]string)
+	inDegree := make(map[string]int)
+
+	for _, rule := range rules {
+		graph[rule.before] = append(graph[rule.before], rule.after)
+		inDegree[rule.after]++
+		if _, exists := inDegree[rule.before]; !exists {
+			inDegree[rule.before] = 0
+		}
+	}
+
+	// make sure all nodes exist in inDegree
+	for _, update := range updates {
+		for _, node := range update {
+			if _, exists := inDegree[node]; !exists {
+				inDegree[node] = 0
+			}
+		}
+	}
+	return graph, inDegree
+}
+
+func createSubGraph(graph map[string][]string, nodes []string) (map[string][]string, map[string]int) {
+	subGraph := make(map[string][]string)
+	inDegree := make(map[string]int)
+
+	for _, node := range nodes {
+		for _, edge := range graph[node] {
+			if idx := slices.Index(nodes, edge); idx >= 0 {
+				subGraph[node] = append(subGraph[node], edge)
+				inDegree[edge]++
+			}
+			if _, exists := inDegree[node]; !exists {
+				inDegree[node] = 0
+			}
+		}
+	}
+
+	return subGraph, inDegree
+}
+
+func reorderList(sortedOrder []string, origList []string) []string {
+	orderMap := make(map[string]int)
+	for i, v := range sortedOrder {
+		orderMap[v] = i
+	}
+
+	sortedList := make([]string, len(origList))
+	copy(sortedList, origList)
+	for i := 0; i < len(sortedList); i++ {
+		for j := 0; j < len(sortedList); j++ {
+			if orderMap[sortedList[i]] > orderMap[sortedList[j]] {
+				sortedList[i], sortedList[j] = sortedList[j], sortedList[i]
+			}
+		}
+	}
+	return sortedList
+}
+
+func topologicalSort(graph map[string][]string, inDegree map[string]int) ([]string, error) {
+	// Kahn's algorithm
+	var sorted []string
+	var queue []string
+	// create a queue with all the nodes that have no incoming edges
+	for node, degree := range inDegree {
+		if degree == 0 {
+			queue = append(queue, node)
+		}
+	}
+
+	for len(queue) > 0 {
+		node := queue[0]
+		queue = slices.Delete(queue, 0, 1)
+		sorted = append(sorted, node)
+
+		for _, neighbor := range graph[node] {
+			inDegree[neighbor]--
+			if inDegree[neighbor] == 0 {
+				queue = append(queue, neighbor)
+			}
+		}
+	}
+
+	// check if all nodes are included
+	if len(sorted) != len(inDegree) {
+		return nil, fmt.Errorf("graph contains a cycle")
+	}
+
+	return sorted, nil
+
+}
+
 func solve1(lines []string) (string, error) {
 	var answer int
 
@@ -102,7 +195,27 @@ func solve1(lines []string) (string, error) {
 func solve2(lines []string) (string, error) {
 	var answer int
 
-	answer = 143
+	rules, updates := parseData(lines)
+	book := newRuleBook()
+	book.loadRules(rules)
+
+	graph, _ := createGraph(book.allRules, updates)
+	for _, update := range updates {
+		if checkUpdateValid(book, update) {
+			continue
+		}
+		subGraph, subInDegree := createSubGraph(graph, update)
+
+		sortedNodes, err := topologicalSort(subGraph, subInDegree)
+		if err != nil {
+			return "", err
+		}
+		sortedList := reorderList(sortedNodes, update)
+		fmt.Println(update)
+		fmt.Println(sortedNodes)
+		mid, _ := strconv.Atoi(sortedList[len(sortedList)/2])
+		answer += mid
+	}
 	return fmt.Sprintf("%d", answer), nil
 }
 
