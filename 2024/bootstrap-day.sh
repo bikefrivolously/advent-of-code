@@ -31,11 +31,17 @@ import (
 )
 
 func solve1(lines []string) (string, error) {
-	return "TODO", nil
+	var answer int
+
+	answer = -1
+	return fmt.Sprintf("%d", answer), nil
 }
 
 func solve2(lines []string) (string, error) {
-	return "TODO", nil
+	var answer int
+
+	answer = -1
+	return fmt.Sprintf("%d", answer), nil
 }
 
 func readFile(filePath string) ([]string, error) {
@@ -85,7 +91,7 @@ func TestSolve1(t *testing.T) {
 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
 	}
 
-	expected := "2"
+	expected := "-1"
 	result, _ := solve1(lines)
 
 	if result != expected {
@@ -99,7 +105,7 @@ func TestSolve2(t *testing.T) {
 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
 	}
 
-	expected := "4"
+	expected := "-1"
 	result, _ := solve2(lines)
 
 	if result != expected {
