@@ -62,7 +62,6 @@ func loadGrid(lines []string) (Grid, GuardInfo) {
 
 	for y, line := range lines {
 		for x, char := range line {
-			fmt.Println(char)
 			c := Cell{
 				visited:    false,
 				obstructed: char == '#',
@@ -94,11 +93,10 @@ func loadGrid(lines []string) (Grid, GuardInfo) {
 	return grid, guard
 }
 
-func solve1(lines []string) (string, error) {
-	answer := 1
+func runSimulation(grid Grid, guard GuardInfo) (int, bool) {
+	var visitedCount int = 1
+	var turnHistory []Position
 
-	grid, guard := loadGrid(lines)
-	fmt.Println(grid, guard)
 	h := len(grid)
 	w := len(grid[0])
 
@@ -128,24 +126,62 @@ func solve1(lines []string) (string, error) {
 
 		c := grid.pos(next)
 		if c.obstructed {
+			turnHistory = append(turnHistory, guard.position)
+			if len(turnHistory) > 10000 {
+				return visitedCount, true
+			}
 			guard.direction = nextDirection
 		} else {
 			if !c.visited {
-				answer++
+				visitedCount++
 			}
 			c.visited = true
 			guard.position = next
 		}
-		fmt.Printf("Direction: %s, Position: %v\n", guard.direction, guard.position)
 	}
+	return visitedCount, false
+}
+
+func solve1(lines []string) (string, error) {
+	grid, guard := loadGrid(lines)
+	answer, _ := runSimulation(grid, guard)
 
 	return fmt.Sprintf("%d", answer), nil
 }
 
 func solve2(lines []string) (string, error) {
 	var answer int
+	var looped bool
 
-	answer = -1
+	grid, guard := loadGrid(lines)
+
+	h := len(grid)
+	w := len(grid[0])
+
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			fmt.Println("solve2: ", y, x)
+
+			if x == guard.position.x && y == guard.position.y {
+				continue
+			}
+			cell := grid[y][x]
+			if !cell.obstructed {
+				tmpGrid := make(Grid, h)
+				for i := range tmpGrid {
+					copyInner := make([]Cell, w)
+					copy(copyInner, grid[i])
+					tmpGrid[i] = copyInner
+				}
+
+				tmpGrid[y][x].obstructed = true
+				_, looped = runSimulation(tmpGrid, guard)
+				if looped {
+					answer++
+				}
+			}
+		}
+	}
 	return fmt.Sprintf("%d", answer), nil
 }
 
