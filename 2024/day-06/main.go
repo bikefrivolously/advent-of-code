@@ -126,6 +126,10 @@ func runSimulation(grid Grid, guard GuardInfo) (int, bool) {
 
 		c := grid.pos(next)
 		if c.obstructed {
+			// my isLoop function didn't work
+			// brute force this instead and consider a loop if the simulation
+			// runs too long.
+			// could be a counter instead of list
 			turnHistory = append(turnHistory, guard.position)
 			if len(turnHistory) > 10000 {
 				return visitedCount, true
@@ -160,8 +164,6 @@ func solve2(lines []string) (string, error) {
 
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			fmt.Println("solve2: ", y, x)
-
 			if x == guard.position.x && y == guard.position.y {
 				continue
 			}
