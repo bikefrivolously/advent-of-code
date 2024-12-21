@@ -21,8 +21,39 @@ func mul(a, b int) int {
 	return a * b
 }
 
+func intPower(base, exp int) int {
+	if exp == 0 {
+		return 1
+	}
+
+	result := 1
+	for exp > 0 {
+		result *= base
+		exp--
+	}
+	return result
+}
+
+func concat(a, b int) int {
+	// 123 || 4512 is 1234512
+
+	// find the number of places in b
+	var places int
+	n := b
+	if b == 0 {
+		places = 1
+	} else {
+		for n > 0 {
+			n /= 10
+			places++
+		}
+	}
+
+	shifted := intPower(10, places)
+	return a*shifted + b
+}
+
 func runTest(test Test, operators []func(int, int) int) bool {
-	fmt.Println("runTest: ", test, operators)
 	// base case
 	if len(test.operands) == 1 {
 		return test.operands[0] == test.value
@@ -67,7 +98,22 @@ func solve1(lines []string) (string, error) {
 func solve2(lines []string) (string, error) {
 	var answer int
 
-	answer = -1
+	tests, err := parseLines(lines)
+	if err != nil {
+		return "", err
+	}
+
+	var operators []func(int, int) int
+	operators = append(operators, add)
+	operators = append(operators, mul)
+	operators = append(operators, concat)
+
+	for _, test := range tests {
+		if runTest(test, operators) {
+			answer += test.value
+		}
+	}
+
 	return fmt.Sprintf("%d", answer), nil
 }
 
