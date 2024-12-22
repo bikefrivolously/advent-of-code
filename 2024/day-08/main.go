@@ -34,18 +34,16 @@ func solve1(lines []string) (string, error) {
 	antinodes := map[Point]bool{}
 
 	freqs, bounds := parseLines(lines)
-	for freq, points := range freqs {
+	for _, points := range freqs {
 		for i := 0; i < len(points)-1; i++ {
 			for j := i + 1; j < len(points); j++ {
 				p1 := points[i]
 				p2 := points[j]
 				rise, run := calcRiseRun(p1, p2)
-				fmt.Printf("%s: point1=%v, point2=%v, rise=%d, run=%d\n", freq, p1, p2, rise, run)
 				// from p1 sub rise and run
 				// from p2 add rise and run
 				a1 := Point{x: p1.x - run, y: p1.y - rise}
 				a2 := Point{x: p2.x + run, y: p2.y + rise}
-				fmt.Printf("a1=%v, a2=%v\n", a1, a2)
 				if isInBounds(bounds, a1) {
 					antinodes[a1] = true
 				}
@@ -63,7 +61,34 @@ func solve1(lines []string) (string, error) {
 func solve2(lines []string) (string, error) {
 	var answer int
 
-	answer = -1
+	antinodes := map[Point]bool{}
+
+	freqs, bounds := parseLines(lines)
+	for _, points := range freqs {
+		for i := 0; i < len(points)-1; i++ {
+			for j := i + 1; j < len(points); j++ {
+				p1 := points[i]
+				p2 := points[j]
+				antinodes[p1] = true
+				antinodes[p2] = true
+				rise, run := calcRiseRun(p1, p2)
+				// from p1 sub rise and run
+				// from p2 add rise and run
+				a1 := Point{x: p1.x - run, y: p1.y - rise}
+				for i := 2; isInBounds(bounds, a1); i++ {
+					antinodes[a1] = true
+					a1 = Point{x: p1.x - i*run, y: p1.y - i*rise}
+				}
+				a2 := Point{x: p2.x + run, y: p2.y + rise}
+				for i := 2; isInBounds(bounds, a2); i++ {
+					antinodes[a2] = true
+					a2 = Point{x: p2.x + i*run, y: p2.y + i*rise}
+				}
+			}
+		}
+	}
+	answer = len(antinodes)
+
 	return fmt.Sprintf("%d", answer), nil
 }
 
