@@ -9,6 +9,16 @@ import (
 	"strconv"
 )
 
+func calculateChecksum(data []int) int {
+	var checksum int
+	for i, v := range data {
+		if v != -1 {
+			checksum += i * v
+		}
+	}
+	return checksum
+}
+
 func solve1(lines []string) (string, error) {
 	var answer int
 
@@ -20,44 +30,97 @@ func solve1(lines []string) (string, error) {
 	defer f_stop()
 	defer b_stop()
 
-	f_i, f_v, _ := f_next()
-	b_i, b_v, _ := b_next()
+	fi, fv, _ := f_next()
+	bi, bv, _ := b_next()
 	for {
-		for f_v != -1 {
-			f_i, f_v, _ = f_next()
+		for fv != -1 {
+			fi, fv, _ = f_next()
 		}
 
-		for b_v == -1 {
-			b_i, b_v, _ = b_next()
+		for bv == -1 {
+			bi, bv, _ = b_next()
 		}
 
-		if f_i >= b_i {
+		if fi >= bi {
 			break
 		}
-		// fmt.Printf("before swap fi=%d, fv=%d, bi=%d, bv=%d\n", f_i, f_v, b_i, b_v)
-		data[f_i] = b_v
-		data[b_i] = f_v
-		// fmt.Printf("after swap fi=%d, fv=%d, bi=%d, bv=%d\n", f_i, f_v, b_i, b_v)
+		data[fi] = bv
+		data[bi] = fv
 
-		f_i, f_v, _ = f_next()
-		b_i, b_v, _ = b_next()
+		fi, fv, _ = f_next()
+		bi, bv, _ = b_next()
 	}
-
-	// fmt.Println(data)
-
-	for i, v := range data {
-		if v != -1 {
-			answer += i * v
-		}
-	}
-
+	answer = calculateChecksum(data)
 	return fmt.Sprintf("%d", answer), nil
+}
+
+func contigSize(data []int, start int) int {
+	var size int
+	val := data[start]
+	for i := start; data[i] == val; i++ {
+		size++
+	}
+	return size
+}
+
+func contigSizeBackwards(data []int, end int) int {
+	var size int
+	val := data[end]
+	for i := end; data[i] == val; i-- {
+		size++
+	}
+	return size
+}
+
+func moveFile(data []int, src, dest, size int) {
+	for i := range size {
+		data[dest+i], data[src+i] = data[src+i], data[dest+i]
+	}
 }
 
 func solve2(lines []string) (string, error) {
 	var answer int
 
-	answer = -1
+	data := parseLines(lines)
+
+	bi := len(data)
+	bv := -1
+	first := true
+	var smallestBv int
+
+	for {
+		for bv == -1 {
+			bi--
+			bv = data[bi]
+		}
+		if first {
+			smallestBv = bv
+		}
+		if bv == 0 {
+			break
+		}
+		smallestBv = min(smallestBv, bv)
+		fileSize := contigSizeBackwards(data, bi)
+		fileStart := bi - (fileSize - 1)
+
+		bi = fileStart
+		bv = -1
+
+		var holeSize int
+
+		for fi := 0; fi < bi; fi++ {
+			if data[fi] == -1 {
+				holeSize = contigSize(data, fi)
+				if holeSize < fileSize {
+					fi += holeSize
+					continue
+				}
+				moveFile(data, fileStart, fi, fileSize)
+				break
+			}
+		}
+	}
+	answer = calculateChecksum(data)
 	return fmt.Sprintf("%d", answer), nil
 }
 
