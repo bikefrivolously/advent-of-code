@@ -5,7 +5,7 @@ import (
 )
 
 func TestSolve1(t *testing.T) {
-	lines, err := readFile("test_input.txt")
+	lines, err := readFile("test_input.txt", nil)
 	if err != nil {
 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
 	}
@@ -19,7 +19,7 @@ func TestSolve1(t *testing.T) {
 }
 
 func TestSolve2(t *testing.T) {
-	lines, err := readFile("test_input.txt")
+	lines, err := readFile("test_input.txt", nil)
 	if err != nil {
 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
 	}

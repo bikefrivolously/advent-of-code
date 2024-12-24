@@ -7,6 +7,7 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"time"
 )
 
 func calculateChecksum(data []int) int {
@@ -151,7 +152,11 @@ func parseLines(lines []string) []int {
 	return data
 }
 
-func readFile(filePath string) ([]string, error) {
+type ReadFileOptions struct {
+	BufferSize int
+}
+
+func readFile(filePath string, options *ReadFileOptions) ([]string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -160,6 +165,12 @@ func readFile(filePath string) ([]string, error) {
 
 	var lines []string
 	scanner := bufio.NewScanner(file)
+
+	if options != nil && options.BufferSize > 0 {
+		buf := make([]byte, options.BufferSize)
+		scanner.Buffer(buf, options.BufferSize)
+	}
+
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
@@ -171,14 +182,47 @@ func readFile(filePath string) ([]string, error) {
 }
 
 func main() {
-	lines, err := readFile("input.txt")
+	lines, err := readFile("input.txt", nil)
 	if err != nil {
 		fmt.Printf("Error reading input file '%s': %v\n", "input.txt", err)
 		os.Exit(1)
 	}
-	answer, _ := solve1(lines)
-	fmt.Printf("Puzzle 1 Answer: %s\n", answer)
 
+	linesHard, err := readFile("input_hard1.txt", nil)
+	if err != nil {
+		fmt.Printf("Error reading input file '%s': %v\n", "input_hard1.txt", err)
+		os.Exit(1)
+	}
+
+	linesEvil, err := readFile("input_evil1.txt", &ReadFileOptions{BufferSize: 200 * 1024})
+	if err != nil {
+		fmt.Printf("Error reading input file '%s': %v\n", "input_evil1.txt", err)
+		os.Exit(1)
+	}
+
+	start := time.Now()
+	answer, _ := solve1(lines)
+	duration := time.Since(start)
+	fmt.Printf("Puzzle 1 Answer: %s (runtime: %v)\n", answer, duration)
+	if answer != "6446899523367" {
+		fmt.Println("Puzzle 1 - expected 6446899523367")
+	}
+
+	start = time.Now()
 	answer2, _ := solve2(lines)
-	fmt.Printf("Puzzle 2 Answer: %s\n", answer2)
+	duration = time.Since(start)
+	fmt.Printf("Puzzle 2 Answer: %s (runtime: %v)\n", answer2, duration)
+	if answer2 != "6478232739671" {
+		fmt.Println("Puzzle 2 - expected 6478232739671")
+	}
+
+	start = time.Now()
+	answerHard, _ := solve2(linesHard)
+	duration = time.Since(start)
+	fmt.Printf("Puzzle 2 (Hard) Answer: %s (expected: 97898222299196) (runtime: %v)\n", answerHard, duration)
+
+	start = time.Now()
+	answerEvil, _ := solve2(linesEvil)
+	duration = time.Since(start)
+	fmt.Printf("Puzzle 2 (Evil) Answer: %s (expected: 5799706413896802) (runtime: %v)\n", answerEvil, duration)
 }
