@@ -2,12 +2,15 @@ package main
 
 import (
 	"bufio"
+	"container/heap"
 	"fmt"
 	"iter"
 	"os"
 	"slices"
 	"strconv"
 	"time"
+
+	"github.com/bikefrivolously/advent-of-code/2024/day-09/freeheap"
 )
 
 func calculateChecksum(data []int) int {
@@ -23,7 +26,7 @@ func calculateChecksum(data []int) int {
 func solve1(lines []string) (string, error) {
 	var answer int
 
-	data := parseLines(lines)
+	data, _ := parseLines(lines)
 
 	f_next, f_stop := iter.Pull2(slices.All(data))
 	b_next, b_stop := iter.Pull2(slices.Backward(data))
@@ -55,15 +58,6 @@ func solve1(lines []string) (string, error) {
 	return fmt.Sprintf("%d", answer), nil
 }
 
-func contigSize(data []int, start int) int {
-	var size int
-	val := data[start]
-	for i := start; data[i] == val; i++ {
-		size++
-	}
-	return size
-}
-
 func contigSizeBackwards(data []int, end int) int {
 	var size int
 	val := data[end]
@@ -82,44 +76,55 @@ func moveFile(data []int, src, dest, size int) {
 func solve2(lines []string) (string, error) {
 	var answer int
 
-	data := parseLines(lines)
+	data, freeSlots := parseLines(lines)
 
 	bi := len(data)
 	bv := -1
-	first := true
-	var smallestBv int
+	prevMoved := -1
 
 	for {
+		bv = -1
 		for bv == -1 {
 			bi--
 			bv = data[bi]
 		}
-		if first {
-			smallestBv = bv
-		}
 		if bv == 0 {
 			break
 		}
-		smallestBv = min(smallestBv, bv)
 		fileSize := contigSizeBackwards(data, bi)
 		fileStart := bi - (fileSize - 1)
-
 		bi = fileStart
-		bv = -1
 
+		// make sure we aren't trying to move the same fileID more than once
+		if prevMoved != -1 && prevMoved <= bv {
+			continue
+		}
+
+		var earliestHoleStart int = fileStart
+		var holeStart int
 		var holeSize int
-
-		for fi := 0; fi < bi; fi++ {
-			if data[fi] == -1 {
-				holeSize = contigSize(data, fi)
-				if holeSize < fileSize {
-					fi += holeSize
-					continue
+		foundHole := false
+		// start looking for the hole with smallest index that will fit the file
+		for s := fileSize; s < 10; s++ {
+			if freeSlots[s].Len() > 0 {
+				holeStart = freeSlots[s][0]
+				if holeStart < earliestHoleStart {
+					holeSize = s
+					foundHole = true
+					earliestHoleStart = holeStart
 				}
-				moveFile(data, fileStart, fi, fileSize)
-				break
 			}
 		}
+		if foundHole {
+			holeStart = heap.Pop(&freeSlots[holeSize]).(int)
+			holeNewSize := holeSize - fileSize
+			if holeNewSize > 0 {
+				heap.Push(&freeSlots[holeNewSize], holeStart+fileSize)
+			}
+			moveFile(data, fileStart, holeStart, fileSize)
+		}
+
+		prevMoved = bv
 	}
 	answer = calculateChecksum(data)
 	return fmt.Sprintf("%d", answer), nil
@@ -137,8 +142,10 @@ func emitN(v, n int) iter.Seq[int] {
 	}
 }
 
-func parseLines(lines []string) []int {
+func parseLines(lines []string) ([]int, [10]freeheap.FreeHeap) {
 	var data []int
+	var freeSlots [10]freeheap.FreeHeap
+
 	for i, c := range lines[0] {
 		n, _ := strconv.Atoi(string(c))
 		if i%2 == 0 {
@@ -146,10 +153,17 @@ func parseLines(lines []string) []int {
 			data = slices.AppendSeq(data, emitN(i/2, n))
 		} else {
 			// free space represented by -1
+			index := len(data)
 			data = slices.AppendSeq(data, emitN(-1, n))
+			freeSlots[n] = append(freeSlots[n], index) // keep track of the starting index for each free chunk of size n
 		}
 	}
-	return data
+
+	for i := range freeSlots {
+		heap.Init(&freeSlots[i])
+	}
+
+	return data, freeSlots
 }
 
 type ReadFileOptions struct {
