@@ -97,6 +97,7 @@ cat > main_test.go <<EOL
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -125,6 +126,30 @@ func TestSolve2(t *testing.T) {
 
 	if result != expected {
 		t.Errorf("solve2() = %s; want %s", result, expected)
+	}
+}
+
+func BenchmarkSolve1(b *testing.B) {
+	lines, err := readFile("input.txt", nil)
+	if err != nil {
+		fmt.Printf("Error reading input file '%s': %v\n", "input.txt", err)
+		panic("crash")
+	}
+	b.ResetTimer()
+	for range b.N {
+		solve1(lines)
+	}
+}
+
+func BenchmarkSolve2(b *testing.B) {
+	lines, err := readFile("input.txt", nil)
+	if err != nil {
+		fmt.Printf("Error reading input file '%s': %v\n", "input.txt", err)
+		panic("crash")
+	}
+	b.ResetTimer()
+	for range b.N {
+		solve2(lines)
 	}
 }
 
