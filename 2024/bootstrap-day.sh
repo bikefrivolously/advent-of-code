@@ -28,6 +28,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 )
 
 func solve1(lines []string) (string, error) {
@@ -44,7 +45,11 @@ func solve2(lines []string) (string, error) {
 	return fmt.Sprintf("%d", answer), nil
 }
 
-func readFile(filePath string) ([]string, error) {
+type ReadFileOptions struct {
+	BufferSize int
+}
+
+func readFile(filePath string, options *ReadFileOptions) ([]string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -53,6 +58,12 @@ func readFile(filePath string) ([]string, error) {
 
 	var lines []string
 	scanner := bufio.NewScanner(file)
+
+	if options != nil && options.BufferSize > 0 {
+		buf := make([]byte, options.BufferSize)
+		scanner.Buffer(buf, options.BufferSize)
+	}
+
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
@@ -64,16 +75,20 @@ func readFile(filePath string) ([]string, error) {
 }
 
 func main() {
-	lines, err := readFile("input.txt")
+	lines, err := readFile("input.txt", nil)
 	if err != nil {
 		fmt.Printf("Error reading input file '%s': %v\n", "input.txt", err)
 		os.Exit(1)
 	}
+	start := time.Now()
 	answer, _ := solve1(lines)
-	fmt.Printf("Puzzle 1 Answer: %s\n", answer)
+	duration := time.Since(start)
+	fmt.Printf("Puzzle 1 Answer: %s (runtime: %v)\n", answer, duration)
 
+	start = time.Now()
 	answer2, _ := solve2(lines)
-	fmt.Printf("Puzzle 2 Answer: %s\n", answer2)
+	duration = time.Since(start)
+	fmt.Printf("Puzzle 2 Answer: %s (runtime: %v)\n", answer2, duration)
 }
 
 EOL
@@ -86,7 +101,7 @@ import (
 )
 
 func TestSolve1(t *testing.T) {
-	lines, err := readFile("test_input.txt")
+	lines, err := readFile("test_input.txt", nil)
 	if err != nil {
 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
 	}
@@ -100,7 +115,7 @@ func TestSolve1(t *testing.T) {
 }
 
 func TestSolve2(t *testing.T) {
-	lines, err := readFile("test_input.txt")
+	lines, err := readFile("test_input.txt", nil)
 	if err != nil {
 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
 	}
