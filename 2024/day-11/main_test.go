@@ -11,7 +11,7 @@ func TestSolve1(t *testing.T) {
 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
 	}
 
-	expected := "-1"
+	expected := "55312"
 	result, _ := solve1(lines)
 
 	if result != expected {
@@ -56,4 +56,3 @@ func BenchmarkSolve2(b *testing.B) {
 		solve2(lines)
 	}
 }
-
