@@ -35,29 +35,45 @@ func intPower(base, exp int) int {
 	return result
 }
 
-func countAfterBlinks(i int, blinks int) int {
-	// fmt.Printf("countAfterBlinks: i=%d, blinks=%d\n", i, blinks)
-	if blinks == 0 {
-		return 1
-	}
-	if i == 0 {
-		return countAfterBlinks(1, blinks-1)
-	} else if digits := numDigits(i); digits%2 == 0 {
-		// split in two
-		l := i / intPower(10, digits/2)
-		r := i - (l * intPower(10, digits/2))
-		// fmt.Printf("i: %d, l: %d, r: %d\n", i, l, r)
+type MemoKey struct {
+	i, blinks int
+}
 
-		return countAfterBlinks(l, blinks-1) + countAfterBlinks(r, blinks-1)
-	} else {
-		return countAfterBlinks(i*2024, blinks-1)
+func memoCountAfterBlinks() func(int, int) int {
+	memo := make(map[MemoKey]int)
+
+	var f func(int, int) int
+	f = func(i int, blinks int) int {
+		if blinks == 0 {
+			return 1
+		}
+
+		k := MemoKey{i, blinks}
+		if val, exists := memo[k]; exists {
+			return val
+		}
+
+		if i == 0 {
+			memo[k] = f(1, blinks-1)
+		} else if digits := numDigits(i); digits%2 == 0 {
+			// split in two
+			l := i / intPower(10, digits/2)
+			r := i - (l * intPower(10, digits/2))
+
+			memo[k] = f(l, blinks-1) + f(r, blinks-1)
+		} else {
+			memo[k] = f(i*2024, blinks-1)
+		}
+		return memo[k]
 	}
+	return f
 }
 
 func solve1(lines []string) (string, error) {
 	var answer int
 
 	queue := parseLines(lines)
+	countAfterBlinks := memoCountAfterBlinks()
 	for e := queue.Front(); e != nil; e = e.Next() {
 		answer += countAfterBlinks(e.Value.(int), 25)
 	}
@@ -69,6 +85,7 @@ func solve2(lines []string) (string, error) {
 	var answer int
 
 	queue := parseLines(lines)
+	countAfterBlinks := memoCountAfterBlinks()
 	for e := queue.Front(); e != nil; e = e.Next() {
 		answer += countAfterBlinks(e.Value.(int), 75)
 	}
