@@ -11,7 +11,7 @@ func TestSolve1(t *testing.T) {
 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
 	}
 
-	expected := "-1"
+	expected := "36"
 	result, _ := solve1(lines)
 
 	if result != expected {
@@ -25,7 +25,7 @@ func TestSolve2(t *testing.T) {
 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
 	}
 
-	expected := "36"
+	expected := "-1"
 	result, _ := solve2(lines)
 
 	if result != expected {

@@ -2,15 +2,113 @@ package main
 
 import (
 	"bufio"
+	"container/list"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 )
 
+type Grid [][]int
+
+func (g Grid) Pos(p Position) int {
+	return g[p.y][p.x]
+}
+
+func (g Grid) Set(p Position, v int) {
+	g[p.y][p.x] = v
+}
+
+type Position struct {
+	x, y int
+}
+
+type QueueElement struct {
+	pos             Position
+	targetElevation int
+}
+
+func mustAtoi(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		panic("failed to convert string to int")
+	}
+	return i
+}
+
+func parseLines(lines []string) Grid {
+	grid := make(Grid, len(lines))
+	for y, line := range lines {
+		grid[y] = make([]int, len(line))
+		for x, c := range line {
+			p := Position{x, y}
+			grid.Set(p, mustAtoi(string(c)))
+		}
+	}
+	return grid
+}
+
+func findTrailheads(grid Grid) []Position {
+	var th []Position
+
+	for y, row := range grid {
+		for x, pos := range row {
+			if pos == 0 {
+				th = append(th, Position{x, y})
+			}
+		}
+	}
+	return th
+}
+
+func nextPos(g Grid, p Position) []Position {
+	next := make([]Position, 0, 4)
+	h := len(g)
+	w := len(g[0])
+
+	if p.x-1 >= 0 {
+		next = append(next, Position{p.x - 1, p.y})
+	}
+	if p.x+1 < w {
+		next = append(next, Position{p.x + 1, p.y})
+	}
+	if p.y-1 >= 0 {
+		next = append(next, Position{p.x, p.y - 1})
+	}
+	if p.y+1 < h {
+		next = append(next, Position{p.x, p.y + 1})
+	}
+	return next
+}
+
+func bfs(g Grid, start Position, target int) int {
+	targetsFound := make(map[Position]bool)
+	queue := list.New()
+	queue.PushBack(QueueElement{start, 0})
+	for queue.Len() > 0 {
+		node := queue.Remove(queue.Front()).(QueueElement)
+		if g.Pos(node.pos) != node.targetElevation {
+			continue
+		}
+		if g.Pos(node.pos) == target {
+			targetsFound[node.pos] = true
+		}
+		neighbours := nextPos(g, node.pos)
+		for _, neighbour := range neighbours {
+			queue.PushBack(QueueElement{neighbour, node.targetElevation + 1})
+		}
+	}
+	return len(targetsFound)
+}
+
 func solve1(lines []string) (string, error) {
 	var answer int
+	grid := parseLines(lines)
+	trailheads := findTrailheads(grid)
+	for _, th := range trailheads {
+		answer += bfs(grid, th, 9)
+	}
 
-	answer = -1
 	return fmt.Sprintf("%d", answer), nil
 }
 
@@ -66,4 +164,3 @@ func main() {
 	duration = time.Since(start)
 	fmt.Printf("Puzzle 2 Answer: %s (runtime: %v)\n", answer2, duration)
 }
-
