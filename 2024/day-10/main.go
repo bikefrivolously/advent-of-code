@@ -81,8 +81,8 @@ func nextPos(g Grid, p Position) []Position {
 	return next
 }
 
-func bfs(g Grid, start Position, target int) int {
-	targetsFound := make(map[Position]bool)
+func bfs(g Grid, start Position, target int, countDistinct bool) int {
+	targetsFound := make(map[Position]int)
 	queue := list.New()
 	queue.PushBack(QueueElement{start, 0})
 	for queue.Len() > 0 {
@@ -91,14 +91,23 @@ func bfs(g Grid, start Position, target int) int {
 			continue
 		}
 		if g.Pos(node.pos) == target {
-			targetsFound[node.pos] = true
+			targetsFound[node.pos] += 1
 		}
 		neighbours := nextPos(g, node.pos)
 		for _, neighbour := range neighbours {
 			queue.PushBack(QueueElement{neighbour, node.targetElevation + 1})
 		}
 	}
-	return len(targetsFound)
+	if countDistinct {
+		distinct := 0
+		for _, v := range targetsFound {
+			distinct += v
+		}
+		return distinct
+
+	} else {
+		return len(targetsFound)
+	}
 }
 
 func solve1(lines []string) (string, error) {
@@ -106,7 +115,7 @@ func solve1(lines []string) (string, error) {
 	grid := parseLines(lines)
 	trailheads := findTrailheads(grid)
 	for _, th := range trailheads {
-		answer += bfs(grid, th, 9)
+		answer += bfs(grid, th, 9, false)
 	}
 
 	return fmt.Sprintf("%d", answer), nil
@@ -114,8 +123,12 @@ func solve1(lines []string) (string, error) {
 
 func solve2(lines []string) (string, error) {
 	var answer int
+	grid := parseLines(lines)
+	trailheads := findTrailheads(grid)
+	for _, th := range trailheads {
+		answer += bfs(grid, th, 9, true)
+	}
 
-	answer = -1
 	return fmt.Sprintf("%d", answer), nil
 }
 
