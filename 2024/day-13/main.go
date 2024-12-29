@@ -35,12 +35,52 @@ func solveLinearSystem(eq1 LinearEquation, eq2 LinearEquation, limit int) (int, 
 			// ans2 := b*eq2.aCoefficent + b*eq2.bCoefficent
 
 			if a*eq1.aCoefficent+b*eq1.bCoefficent == eq1.constant && a*eq2.aCoefficent+b*eq2.bCoefficent == eq2.constant {
-				fmt.Printf("Solved: %d, %d\n", a, b)
+				// fmt.Printf("Solved: %d, %d\n", a, b)
 				return a, b, nil
 			}
 		}
 	}
 	return 0, 0, fmt.Errorf("no solution for %v %v", eq1, eq2)
+}
+
+func solveLinearSystem2(eq1 LinearEquation, eq2 LinearEquation) (int, int, error) {
+	// solve for a by eliminating b
+	// multiply eq1 by eq2.b
+	eq3 := eq1
+	eq3.aCoefficent *= eq2.bCoefficent
+	eq3.bCoefficent *= eq2.bCoefficent
+	eq3.constant *= eq2.bCoefficent
+
+	// multiply eq2 by eq1.b
+	eq4 := eq2
+	eq4.aCoefficent *= eq1.bCoefficent
+	eq4.bCoefficent *= eq1.bCoefficent
+	eq4.constant *= eq1.bCoefficent
+
+	// subtract eq4 from eq3. This leaves us with 0 for b
+	eq3.aCoefficent -= eq4.aCoefficent
+	eq3.bCoefficent -= eq4.bCoefficent
+	eq3.constant -= eq4.constant
+
+	if remainder := eq3.constant % eq3.aCoefficent; remainder != 0 {
+		return 0, 0, fmt.Errorf("no solution for %v %v", eq1, eq2)
+	}
+
+	a := eq3.constant / eq3.aCoefficent
+
+	// now sub a into eq1 and solve for b
+	// eq1.A*a + eq1.B*b = eq1.constant
+	// eq1.B*b = eq1.constant - eq1.A*a <-- i
+	// b = (eq1.constant - eq1.A*a) / eq1.B
+	i := eq1.constant - eq1.aCoefficent*a
+
+	if remainder := i % eq1.bCoefficent; remainder != 0 {
+		return 0, 0, fmt.Errorf("no solution for %v %v", eq1, eq2)
+	}
+	b := i / eq1.bCoefficent
+
+	// fmt.Printf("Solved: %d, %d\n", a, b)
+	return a, b, nil
 }
 
 func solve1(lines []string) (string, error) {
@@ -61,7 +101,17 @@ func solve1(lines []string) (string, error) {
 func solve2(lines []string) (string, error) {
 	var answer int
 
-	answer = -1
+	equations := parseLines(lines)
+	for _, system := range equations {
+		system.one.constant += 10000000000000
+		system.two.constant += 10000000000000
+		a, b, err := solveLinearSystem2(system.one, system.two)
+		if err != nil {
+			continue
+		}
+		answer += 3*a + 1*b
+	}
+
 	return fmt.Sprintf("%d", answer), nil
 }
 
