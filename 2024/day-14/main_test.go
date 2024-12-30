@@ -11,8 +11,8 @@ func TestSolve1(t *testing.T) {
 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
 	}
 
-	expected := "-1"
-	result, _ := solve1(lines)
+	expected := "12"
+	result, _ := solve1(lines, 11, 7)
 
 	if result != expected {
 		t.Errorf("solve1() = %s; want %s", result, expected)
@@ -41,7 +41,7 @@ func BenchmarkSolve1(b *testing.B) {
 	}
 	b.ResetTimer()
 	for range b.N {
-		solve1(lines)
+		solve1(lines, 101, 103)
 	}
 }
 
@@ -56,4 +56,3 @@ func BenchmarkSolve2(b *testing.B) {
 		solve2(lines)
 	}
 }
-
