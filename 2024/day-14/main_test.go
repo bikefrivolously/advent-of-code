@@ -19,19 +19,19 @@ func TestSolve1(t *testing.T) {
 	}
 }
 
-func TestSolve2(t *testing.T) {
-	lines, err := readFile("test_input.txt", nil)
-	if err != nil {
-		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
-	}
+// func TestSolve2(t *testing.T) {
+// 	lines, err := readFile("test_input.txt", nil)
+// 	if err != nil {
+// 		t.Fatalf("Error reading input file '%s': %v\n", "test_input.txt", err)
+// 	}
 
-	expected := "-1"
-	result, _ := solve2(lines)
+// 	expected := "-1"
+// 	result, _ := solve2(lines)
 
-	if result != expected {
-		t.Errorf("solve2() = %s; want %s", result, expected)
-	}
-}
+// 	if result != expected {
+// 		t.Errorf("solve2() = %s; want %s", result, expected)
+// 	}
+// }
 
 func BenchmarkSolve1(b *testing.B) {
 	lines, err := readFile("input.txt", nil)
@@ -53,6 +53,6 @@ func BenchmarkSolve2(b *testing.B) {
 	}
 	b.ResetTimer()
 	for range b.N {
-		solve2(lines)
+		solve2(lines, 101, 103)
 	}
 }

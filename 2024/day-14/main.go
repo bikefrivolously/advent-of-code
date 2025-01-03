@@ -14,12 +14,24 @@ type Robot struct {
 	velocity Velocity
 }
 
+func (r *Robot) step(width, height int) {
+	r.position.x = (((r.position.x + r.velocity.dx) % width) + width) % width
+	r.position.y = (((r.position.y + r.velocity.dy) % height) + height) % height
+}
+
 type Position struct {
 	x, y int
 }
 
 type Velocity struct {
 	dx, dy int
+}
+
+var directions [4]Position = [4]Position{
+	{0, -1}, // up
+	{0, 1},  //down
+	{1, 0},  // right
+	{-1, 0}, // left
 }
 
 func findFinalPosition(robot Robot, width, height, steps int) Position {
@@ -53,7 +65,7 @@ func solve1(lines []string, width int, height int) (string, error) {
 	for _, robot := range robots {
 		finalPos := findFinalPosition(robot, width, height, steps)
 		quad := getQuadrant(finalPos, width, height)
-		fmt.Println(robot, finalPos, quad)
+		// fmt.Println(robot, finalPos, quad)
 		if quad != -1 {
 			quadrants[quad] += 1
 		}
@@ -67,11 +79,76 @@ func solve1(lines []string, width int, height int) (string, error) {
 	return fmt.Sprintf("%d", answer), nil
 }
 
-func solve2(lines []string) (string, error) {
+func solve2(lines []string, width, height int) (string, error) {
 	var answer int
 
-	answer = -1
+	robots := parseLines(lines)
+	maxNeighbours := -1
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for t := 1; t <= 1_000_000; t++ {
+		for i := range robots {
+			robots[i].step(width, height)
+		}
+
+		n := countNeighbours(robots)
+
+		if n > maxNeighbours {
+			maxNeighbours = n
+			clearScreen()
+			moveCursorHome()
+
+			fmt.Printf("Time: %d\n", t)
+			fmt.Printf("n=%d, mn=%d\n", n, maxNeighbours)
+			drawFrame(robots, width, height)
+			scanner.Scan()
+		}
+	}
+
 	return fmt.Sprintf("%d", answer), nil
+}
+
+func countNeighbours(robots []Robot) int {
+	neighbours := 0
+	locations := make(map[Position]bool)
+	for _, r := range robots {
+		locations[r.position] = true
+	}
+	for p := range locations {
+		for _, d := range directions {
+			nx := p.x + d.x
+			ny := p.y + d.y
+			if _, exists := locations[Position{nx, ny}]; exists {
+				neighbours++
+			}
+		}
+	}
+	return neighbours
+}
+
+func drawFrame(robots []Robot, width, height int) {
+	grid := make([][]rune, height)
+	for i := range grid {
+		grid[i] = make([]rune, width)
+		for j := range grid[i] {
+			grid[i][j] = '.'
+		}
+	}
+	for _, r := range robots {
+		grid[r.position.y][r.position.x] = 'X'
+	}
+
+	for _, row := range grid {
+		fmt.Println(string(row))
+	}
+}
+
+func clearScreen() {
+	fmt.Print("\033[2J")
+}
+
+func moveCursorHome() {
+	fmt.Print("\033[H")
 }
 
 func mustAtoi(s string) int {
@@ -141,7 +218,7 @@ func main() {
 	fmt.Printf("Puzzle 1 Answer: %s (runtime: %v)\n", answer, duration)
 
 	start = time.Now()
-	answer2, _ := solve2(lines)
+	answer2, _ := solve2(lines, 101, 103)
 	duration = time.Since(start)
 	fmt.Printf("Puzzle 2 Answer: %s (runtime: %v)\n", answer2, duration)
 }
