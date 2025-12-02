@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+func Abs(x int) int {
+	if x < 0 {
+		return x * -1
+	}
+	return x
+}
+
 func parseLines(lines []string) []int {
 	var moves []int
 	for _, line := range lines {
@@ -25,8 +32,27 @@ func parseLines(lines []string) []int {
 }
 
 func rotateDial(pos int, clicks int) int {
-	new_pos := (pos + clicks) % 100
+	new_pos := (((pos + clicks) % 100) + 100) % 100
 	return new_pos
+}
+
+func rotateDialCountZeros(pos int, clicks int) (int, int) {
+	var zeros int
+	zeros += Abs(clicks / 100)
+	remainder := clicks % 100
+	fmt.Printf("Position: %d, Clicks: %d, Zeros: %d, Remainder: %d\n", pos, clicks, zeros, remainder)
+	if remainder == 0 {
+		return pos, zeros
+	}
+	new_pos := rotateDial(pos, remainder)
+	if pos == 0 {
+		return new_pos, zeros
+	}
+	if (remainder > 0 && new_pos < pos) || (remainder < 0 && new_pos > pos) || new_pos == 0 {
+		zeros += 1
+	}
+	fmt.Printf("New Pos: %d, Zeros: %d\n", new_pos, zeros)
+	return new_pos, zeros
 }
 
 func solve1(lines []string) (string, error) {
@@ -46,7 +72,13 @@ func solve1(lines []string) (string, error) {
 func solve2(lines []string) (string, error) {
 	var answer int
 
-	answer = -1
+	moves := parseLines(lines)
+	dial_position := 50
+	zeros := 0
+	for _, move := range moves {
+		dial_position, zeros = rotateDialCountZeros(dial_position, move)
+		answer += zeros
+	}
 	return fmt.Sprintf("%d", answer), nil
 }
 
