@@ -27,6 +27,37 @@ func SplitInt(n int) (int, int, bool) {
 	return left, right, true
 }
 
+func checkForRepeats(n int) bool {
+	s := strconv.Itoa(n)
+	max_size := len(s) / 2
+	for size := 1; size <= max_size; size++ {
+
+		if len(s)%size != 0 {
+
+			continue
+		}
+		first_part := s[0:size]
+
+		var repeat_found bool
+		var part string
+		for j := size; j+size <= len(s); j += size {
+			repeat_found = true
+			part = s[j : j+size]
+
+			if part != first_part {
+				repeat_found = false
+				break
+			}
+		}
+		if repeat_found {
+
+			return true
+		}
+	}
+
+	return false
+}
+
 func parseInput(line string) []Range {
 	var ranges []Range
 	for part := range strings.SplitSeq(line, ",") {
@@ -52,7 +83,6 @@ func solve1(lines []string) (string, error) {
 	var answer int
 	ranges := parseInput(lines[0])
 	for _, r := range ranges {
-		fmt.Println(r)
 		for i, j := r.start, r.end; i <= j; i++ {
 			left, right, split := SplitInt(i)
 			if !split {
@@ -68,8 +98,14 @@ func solve1(lines []string) (string, error) {
 
 func solve2(lines []string) (string, error) {
 	var answer int
-
-	answer = -1
+	ranges := parseInput(lines[0])
+	for _, r := range ranges {
+		for i, j := r.start, r.end; i <= j; i++ {
+			if checkForRepeats(i) {
+				answer += i
+			}
+		}
+	}
 	return fmt.Sprintf("%d", answer), nil
 }
 
